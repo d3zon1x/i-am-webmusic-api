@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
@@ -38,3 +39,12 @@ def authenticate_user(db: Session, email: str, password: str):
     if not verify_password(password, user.hashed_password):
         return None
     return user
+
+def decode_access_token(token: str) -> str:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
