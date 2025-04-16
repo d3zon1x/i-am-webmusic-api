@@ -5,7 +5,16 @@ import re
 
 class UserCreate(BaseModel):
     email: EmailStr
+    username: str  # ✅ ДОДАЙ ЦЕ ПОЛЕ
     password: str
+
+    @validator("username")
+    def validate_username(cls, v):
+        if len(v) < 3:
+            raise ValueError("Username must be at least 3 characters")
+        if not re.match(r"^[a-zA-Z0-9_]+$", v):
+            raise ValueError("Username must contain only letters, digits, and underscores")
+        return v
 
     @validator("password")
     def validate_password(cls, value):
@@ -19,14 +28,25 @@ class UserCreate(BaseModel):
             raise ValueError("Password must contain at least one uppercase letter")
         return value
 
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    username: str
+    is_active: bool
+
+    class Config:
+        orm_mode = True
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+
 class UserOut(BaseModel):
     id: int
-    email: EmailStr
+    email: str
+    username: str
+    is_active: bool
 
     class Config:
         orm_mode = True
