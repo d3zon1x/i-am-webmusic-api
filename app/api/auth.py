@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.user import User
@@ -8,6 +9,11 @@ from app.services.auth_service import create_user, authenticate_user, create_acc
 from app.services.token_service import get_current_user
 
 router = APIRouter(tags=["Auth"])
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+    remember_me: bool = False  # 👈 додай це
 
 @router.post("/register", response_model=UserOut)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -19,16 +25,23 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not auth_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
+    # Якщо remember_me → 30 днів, інакше сесія
+    max_age = 60 * 60 * 24 * 30 if user.remember_me else None
+
     access_token = create_access_token(data={"sub": auth_user.email})
+
     response = JSONResponse(content={"message": "Logged in"})
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
+        max_age=max_age,       # 👈 тут магія
         samesite="Lax",
-        secure=False  # продакшн → True
+        secure=False           # продакшн → True
     )
     return response
+
+
 
 @router.get("/me", response_model=UserOut)
 def get_me(request: Request, db: Session = Depends(get_db)):
