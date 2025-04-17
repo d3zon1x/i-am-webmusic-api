@@ -5,13 +5,15 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from fastapi.responses import RedirectResponse
+
 from app.db import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserOut, UserResponse
+from app.schemas.user import UserCreate, UserLogin, UserOut, UserResponse, PasswordResetRequest, PasswordReset
 from app.services.auth_service import create_user, authenticate_user, create_access_token, decode_access_token, \
-    create_activation_token, decode_activation_token
+    create_activation_token, decode_activation_token, generate_reset_token, reset_password
 from app.services.token_service import get_current_user
-from app.utils.email_utils import send_email
+from app.utils.email_utils import send_email, get_password_reset_template
 from fastapi import BackgroundTasks
 
 
@@ -34,7 +36,7 @@ def register(background_tasks: BackgroundTasks, user: UserCreate, db: Session = 
     subject = "Activate your account"
     body = f"Hello {db_user.username},\n\nPlease activate your account:\n{activation_link}"
 
-    background_tasks.add_task(send_email, db_user.email, subject, body)
+    background_tasks.add_task(send_email, db_user.email, "IAMWEBMUSIC account activation", activation_link)
     return db_user
 
 @router.post("/login")
@@ -103,7 +105,7 @@ def activate_account(token: str, db: Session = Depends(get_db)):
     user.is_active = True
     db.commit()
 
-    return {"message": "Account activated successfully"}
+    return RedirectResponse(url="http://localhost:5173")  # ⚡ сюди редірект
 
 
 @router.get("/users", response_model=List[UserResponse])
@@ -120,3 +122,22 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"detail": f"User {user.email} deleted"}
+
+@router.post("/forgot-password")
+def forgot_password(request_data: PasswordResetRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request_data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    token = generate_reset_token(user.email)
+    reset_link = f"http://localhost:5173/reset-password?token={token}"
+    subject = "Reset your password"
+    html = get_password_reset_template(reset_link)
+
+    background_tasks.add_task(send_email, user.email, subject, html)
+    return {"message": "Password reset link sent"}
+
+@router.post("/reset-password")
+def reset_password_route(data: PasswordReset, db: Session = Depends(get_db)):
+    reset_password(data.token, data.new_password, db)
+    return {"message": "Password successfully updated"}

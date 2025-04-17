@@ -50,3 +50,11 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class PasswordResetRequest(BaseModel):
+    email: str
+
+class PasswordReset(BaseModel):
+    token: str
+    new_password: str
+
