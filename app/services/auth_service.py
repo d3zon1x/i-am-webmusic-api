@@ -10,8 +10,8 @@ from app.models.user import User
 
 SECRET_KEY = os.getenv("SECRET_KEY", "mysecret")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-ACTIVATION_TOKEN_EXPIRE_HOURS = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 60*24*7
+ACTIVATION_TOKEN_EXPIRE_HOURS = 24*7
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

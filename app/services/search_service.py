@@ -6,6 +6,7 @@ load_dotenv()
 
 LASTFM_API_KEY = os.getenv("LASTFM_API_KEY")
 
+
 async def search_song(query: str):
     url = "http://ws.audioscrobbler.com/2.0/"
     params = {

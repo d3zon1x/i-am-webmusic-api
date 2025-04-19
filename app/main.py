@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api import search
+from app.api import search, music
 from app.api import auth
 from app.db import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,3 +29,6 @@ app.include_router(search.router, prefix="/api")
 
 # AUTH ROUTER
 app.include_router(auth.router, prefix="/api")
+
+# MUSIC ROUTER
+app.include_router(music.router, prefix="/api")
