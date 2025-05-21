@@ -22,7 +22,7 @@ router = APIRouter(tags=["Auth"])
 class UserLogin(BaseModel):
     email: str
     password: str
-    remember_me: bool = False  # 👈 додай це
+    remember_me: bool = False
 
 @router.post("/register", response_model=UserOut)
 def register(background_tasks: BackgroundTasks, user: UserCreate, db: Session = Depends(get_db)):
@@ -55,7 +55,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         key="access_token",
         value=access_token,
         httponly=True,
-        max_age=max_age,       # 👈 тут магія
+        max_age=max_age,
         samesite="Lax",
         secure=False           # продакшн → True
     )
