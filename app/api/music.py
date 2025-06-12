@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query, HTTPException
 from fastapi.responses import FileResponse
 
 from app.services.donwload_service import get_audio_file
+from app.services.spotify_service import spotify_service
 from app.services.youtube_service import search_youtube_music
 
 router = APIRouter(prefix="/music", tags=["Music"])
@@ -19,3 +20,10 @@ async def stream_audio(video_id: str):
         return FileResponse(file_path, media_type="audio/mpeg")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/api/music/recommendations")
+async def recommendations(country: str = Query("US", max_length=2), limit: int = Query(10, ge=1, le=50)):
+
+    tracks = await spotify_service.get_recommendations(country=country.upper(), limit=limit)
+    return {"tracks": tracks}
+
