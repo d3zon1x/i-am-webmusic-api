@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException
 from ..services.spotify_service import spotify_service, SpotifyService
 import httpx
 
-router = APIRouter()
+router = APIRouter(tags=["Artistç"])
+
 
 @router.get("/artist/{artist_name}")
 async def get_artist_by_name(artist_name: str, market: str = "US"):

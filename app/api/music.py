@@ -21,7 +21,7 @@ async def stream_audio(video_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/music/recommendations")
+@router.get("/recommendations")
 async def recommendations(country: str = Query("US", max_length=2), limit: int = Query(10, ge=1, le=50)):
 
     tracks = await spotify_service.get_recommendations(country=country.upper(), limit=limit)
