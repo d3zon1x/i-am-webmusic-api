@@ -10,7 +10,6 @@ async def get_artist_by_name(artist_name: str, market: str = "US"):
     headers = {"Authorization": f"Bearer {spotify_service._token}"}
 
     async with httpx.AsyncClient() as client:
-        # 1. Отримуємо ID артиста по назві
         search_res = await client.get(
             f"{spotify_service.API_BASE}/search",
             headers=headers,
@@ -24,10 +23,9 @@ async def get_artist_by_name(artist_name: str, market: str = "US"):
         if not artists:
             raise HTTPException(status_code=404, detail="Artist not found")
 
-        artist = artists[0]  # Отримуємо перший знайдений артист
+        artist = artists[0]
         artist_id = artist["id"]
 
-        # 2. Отримуємо дані про артиста
         res_artist = await client.get(
             f"{spotify_service.API_BASE}/artists/{artist_id}",
             headers=headers,
@@ -37,7 +35,6 @@ async def get_artist_by_name(artist_name: str, market: str = "US"):
             raise HTTPException(status_code=404, detail="Artist details not found")
         artist = res_artist.json()
 
-        # 3. Отримуємо топ треки артиста
         res_top = await client.get(
             f"{spotify_service.API_BASE}/artists/{artist_id}/top-tracks",
             headers=headers,
@@ -45,7 +42,6 @@ async def get_artist_by_name(artist_name: str, market: str = "US"):
         )
         top_tracks = res_top.json().get("tracks", [])
 
-        # 4. Отримуємо альбоми артиста
         res_albums = await client.get(
             f"{spotify_service.API_BASE}/artists/{artist_id}/albums",
             headers=headers,
@@ -53,10 +49,8 @@ async def get_artist_by_name(artist_name: str, market: str = "US"):
         )
         albums = res_albums.json().get("items", [])
 
-    # Сортуємо альбоми за датою релізу (від найновіших)
     albums = sorted({a["name"]: a for a in albums}.values(), key=lambda x: x["release_date"], reverse=True)
 
-    # Повертаємо результат
     return {
         "artist": {
             "id": artist["id"],
@@ -94,7 +88,6 @@ async def get_tracks_from_album(album_id: str, market: str = "US"):
     headers = {"Authorization": f"Bearer {spotify_service._token}"}
 
     async with httpx.AsyncClient() as client:
-        # 1. Отримуємо інформацію про альбом
         res_album = await client.get(
             f"{spotify_service.API_BASE}/albums/{album_id}",
             headers=headers,
@@ -104,7 +97,6 @@ async def get_tracks_from_album(album_id: str, market: str = "US"):
             raise HTTPException(status_code=404, detail="Album not found")
         album = res_album.json()
 
-        # 2. Отримуємо треки з альбому
         res_tracks = await client.get(
             f"{spotify_service.API_BASE}/albums/{album_id}/tracks",
             headers=headers,
@@ -114,7 +106,6 @@ async def get_tracks_from_album(album_id: str, market: str = "US"):
             raise HTTPException(status_code=404, detail="Tracks not found")
         tracks = res_tracks.json().get("items", [])
 
-    # Форматуємо треки для відповіді
     formatted_tracks = [
         {
             "id": track["id"],
@@ -131,7 +122,7 @@ async def get_tracks_from_album(album_id: str, market: str = "US"):
         "album": {
             "id": album["id"],
             "name": album["name"],
-            "type": album["album_type"],  # "album" чи "single"
+            "type": album["album_type"],
             "photo": album["images"][1]["url"] if len(album["images"]) > 1 else album["images"][0]["url"],
             "release_date": album["release_date"],
         },
