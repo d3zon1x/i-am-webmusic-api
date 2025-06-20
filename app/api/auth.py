@@ -45,7 +45,12 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not auth_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # Якщо remember_me → 30 днів, інакше сесія
+    if not auth_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account not activated. Please check your email and activate your account."
+        )
+
     max_age = 60 * 60 * 24 * 30 if user.remember_me else None
 
     access_token = create_access_token(data={"sub": auth_user.email})
@@ -57,7 +62,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         httponly=True,
         max_age=max_age,
         samesite="Lax",
-        secure=False           # продакшн → True
+        secure=False
     )
     return response
 
